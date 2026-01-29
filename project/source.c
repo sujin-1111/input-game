@@ -5,8 +5,11 @@
 #include <time.h>
 #include <locale.h>
 
-#define TOTAL 20   // 총 상자 개수
 #define VISIBLE 6  // 화면에 보이는 상자 개수
+
+#define BOX_W 8
+#define BOX_H 5
+#define BOX_GAP 6
 
 // 커서 이동
 void gotoxy(int x, int y)
@@ -36,11 +39,13 @@ void drawBox(int x, int y, int color)
 {
 	setColor(color);
 
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i < BOX_H; i++) {
 		gotoxy(x, y + i);
 
-		for (int j = 0; j < 8; j++) {
-			printf("■");
+		for (int j = 0; j < BOX_W; j++) {
+			if (box[i][j] == 1)
+				printf("■");
+			else printf(" ");
 		}
 	}
 
@@ -50,7 +55,7 @@ void drawBox(int x, int y, int color)
 // 박스 없애기
 void clearBox(int x, int y)
 {
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i < BOX_H; i++) {
 		gotoxy(x, y + i);
 		printf("                ");
 	}
@@ -78,45 +83,89 @@ void makeBox(int* answer, int* color)
 	if (*answer == 1) *color = 13;  // 보라
 	if (*answer == 2) *color = 14;  // 노랑
 }
+
+// 점수 출력
+void drawScore(int score)
+{
+	gotoxy(2, 2);
+	setColor(7);
+	printf("score : %d ", score);
+}
+
+// 목숨 출력
+void drawLife(int life)
+{
+	gotoxy(2, 3);
+	printf("Life : ");
+	for (int i = 0; i < life; i++) printf("♥");
+	printf("  ");
+}
+
 int main()
 {
 	setlocale(LC_ALL, "");
 	srand((unsigned)time(NULL));
 	system("cls");
 
-	int startX = 10;
-	int startY = 5;
+// 기준선 방식
+	int centerX = 40;
+	int centerY = 20;
 
-	int answers[VISIBLE];  //  상자 정답 반향
-	int colors[VISIBLE];   //  상자 색
+	int startX = centerX - (BOX_W / 2);
 
-	int cleared = 0;  // 지금까지 깬 개수
+	int answers[VISIBLE];
+	int colors[VISIBLE];
+
+	int score = 0;
+	int life = 3;
 
 	// 상자 6개 생성
 	for (int i = 0; i < VISIBLE; i++) 
 	{
 		makeBox(&answers[i], &colors[i]);
-		drawBox(startX, startY + i * 6, colors[i]);
 	}
 
 	// 게임 루프
-	while (cleared < TOTAL)
+	while (1)
 	{
+		for (int i = 0; i < VISIBLE; i++)
+		{
+			int y = centerY - (VISIBLE / 2 - i) * BOX_GAP;
+			drawBox(startX, y, colors[i]);
+		}
+
+		drawScore(score);
+		drawLife(life);
+
 		int input = getDirection();
-		int bottomY = startY + (VISIBLE - 1) * 6;
+
+		int bottomIndex = VISIBLE - 1;
+		int bottomY = centerY - (VISIBLE / 2 - bottomIndex) * BOX_GAP;
 
 		// 판정
-		if (input == answers[VISIBLE - 1])
+		if (input == answers[bottomIndex])
 		{
+			
+			// 점수 계산
+			if (answers[bottomIndex] == 0) score += 2;
+			if (answers[bottomIndex] == 1) score += 3;
+			if (answers[bottomIndex] == 2) score += 5;
+
 			drawBox(startX, bottomY, 10);   // 초록
 		}
 		else
 		{
+			life--;
 			drawBox(startX, bottomY, 12);   // 빨강
 		}
 		
+		drawScore(score);
+		drawLife(life);
+
 		Sleep(200);
 		clearBox(startX, bottomY);
+
+		if (life == 0) break;
 
 		// 배열 이동 (색유지)
 		for (int i = VISIBLE - 1; i > 0; i--)
@@ -128,23 +177,23 @@ int main()
 		// 새 상자 생성
 		makeBox(&answers[0], &colors[0]);
 
-		// 화면 다시
+		// 화면 정리
 		for (int i = 0; i < VISIBLE; i++)
 		{
-			clearBox(startX, startY + i * 6);
+			int y = centerY - (VISIBLE / 2 - i) * BOX_GAP;
+			clearBox(startX, y);
 		}
-
-		for (int i = 0; i < VISIBLE; i++)
-		{
-			drawBox(startX, startY + i * 6, colors[i]);
-		}
-
-		cleared++;
 	}
 	
-	// 클리어
-	gotoxy(0, startY + 40);
-	printf("you win!!");
-	_getch();
+	// 게임 오버
+	gotoxy(30, centerY + 10);
+	setColor(12);
+	printf("GAME OVER");
+
+	gotoxy(30, centerY + 12);
+	printf("SCORE : %d", score);
+	setColor(7);
+
+	(void)_getch();
 	return 0;
 }
