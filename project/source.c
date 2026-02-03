@@ -101,6 +101,34 @@ void drawLife(int life)
 	printf("  ");
 }
 
+// 분류 기준 표시
+void drawRule(int startX, int bottomY)
+{
+	int ruleX = startX - 1;
+	int ruleY = bottomY + BOX_H + 3;
+
+	gotoxy(ruleX, ruleY);
+	setColor(11); printf("← 파랑  ");
+	setColor(13); printf("→ 보라  ");
+	setColor(14); printf("↑ 노랑  ");
+	setColor(7);
+}
+
+// GAME OVER 화면
+void drawGameOver(int centerX, int centerY, int score)
+{
+	system("cls");
+
+	setColor(12);
+	gotoxy(centerX - 9, centerY - 1);
+	printf("GAME OVER");
+
+	setColor(7);
+	gotoxy(centerX - 9, centerY + 1);
+	printf("SCORE : %d", score);
+
+}
+
 int main()
 {
 	setlocale(LC_ALL, "");
@@ -137,10 +165,15 @@ int main()
 		drawScore(score);
 		drawLife(life);
 
-		int input = getDirection();
+		
 
 		int bottomIndex = VISIBLE - 1;
 		int bottomY = centerY - (VISIBLE / 2 - bottomIndex) * BOX_GAP;
+
+		// 분류기준
+		drawRule(startX, bottomY);
+
+		int input = getDirection();
 
 		// 판정
 		if (input == answers[bottomIndex])
@@ -158,14 +191,15 @@ int main()
 			life--;
 			drawBox(startX, bottomY, 12);   // 빨강
 		}
-		
-		drawScore(score);
-		drawLife(life);
-
+	
 		Sleep(200);
 		clearBox(startX, bottomY);
 
-		if (life == 0) break;
+		if (life == 0)
+		{
+			drawGameOver(centerX, centerY, score);
+			break;
+		}
 
 		// 배열 이동 (색유지)
 		for (int i = VISIBLE - 1; i > 0; i--)
@@ -184,15 +218,6 @@ int main()
 			clearBox(startX, y);
 		}
 	}
-	
-	// 게임 오버
-	gotoxy(30, centerY + 10);
-	setColor(12);
-	printf("GAME OVER");
-
-	gotoxy(30, centerY + 12);
-	printf("SCORE : %d", score);
-	setColor(7);
 
 	(void)_getch();
 	return 0;
